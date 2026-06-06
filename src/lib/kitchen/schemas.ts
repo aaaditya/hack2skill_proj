@@ -63,6 +63,13 @@ export const budgetAnalysisSchema = z.object({
   notes: z.string().trim().min(1),
 });
 
+export const cookingTodoItemSchema = z.object({
+  time: z.string().trim().min(1),
+  task: z.string().trim().min(1),
+  category: z.enum(["Breakfast", "Groceries", "Lunch", "Dinner", "Prep"]),
+  completed: z.boolean().default(false),
+});
+
 export const kitchenPlanSchema = z.object({
   breakfast: mealRecommendationSchema.extend({
     mealType: z.literal("Breakfast"),
@@ -84,6 +91,7 @@ export const kitchenPlanSchema = z.object({
     )
     .default([]),
   budgetAnalysis: budgetAnalysisSchema,
+  cookingTodoList: z.array(cookingTodoItemSchema).default([]),
   wasteReductionScore: z.object({
     score: z.coerce.number().min(0).max(100),
     label: z.string().trim().min(1),
@@ -94,4 +102,5 @@ export const kitchenPlanSchema = z.object({
 export type KitchenFormValues = z.infer<typeof kitchenFormSchema>;
 export type MealRecommendation = z.infer<typeof mealRecommendationSchema>;
 export type BudgetAnalysis = z.infer<typeof budgetAnalysisSchema>;
+export type CookingTodoItem = z.infer<typeof cookingTodoItemSchema>;
 export type KitchenPlan = z.infer<typeof kitchenPlanSchema>;

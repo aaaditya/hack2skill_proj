@@ -49,6 +49,22 @@ export const geminiResponseSchema = {
       },
       required: ["estimatedCost", "budgetStatus", "savingsOrExcess", "notes"],
     },
+    cookingTodoList: {
+      type: "ARRAY",
+      items: {
+        type: "OBJECT",
+        properties: {
+          time: { type: "STRING" },
+          task: { type: "STRING" },
+          category: {
+            type: "STRING",
+            enum: ["Breakfast", "Groceries", "Lunch", "Dinner", "Prep"],
+          },
+          completed: { type: "BOOLEAN" },
+        },
+        required: ["time", "task", "category", "completed"],
+      },
+    },
     wasteReductionScore: {
       type: "OBJECT",
       properties: {
@@ -69,6 +85,7 @@ export const geminiResponseSchema = {
     "groceryList",
     "substitutions",
     "budgetAnalysis",
+    "cookingTodoList",
     "wasteReductionScore",
   ],
 } as const;
@@ -142,11 +159,13 @@ Mandatory output alignment:
 - Include a "groceryList" with only missing items worth buying today.
 - Include "substitutions" for missing, expensive, or diet-conflicting ingredients.
 - Include "budgetAnalysis" that compares estimated cost against the stated daily budget.
+- Include "cookingTodoList" as a structured timeline/checklist for today's cooking actions; it will be rendered as "Today's Cooking To-Do List".
 - Include a "wasteReductionScore" from 0 to 100.
 
 Planning constraints:
 - Prefer available ingredients and list missing ingredients clearly.
 - Keep methods realistic for the user's skill level and available cooking time.
+- Build to-do tasks from selected meals, grocery needs, missing ingredients, and available cooking time.
 - Keep calories as estimates, not medical claims.
 - Return only valid JSON matching the provided schema.
 `;

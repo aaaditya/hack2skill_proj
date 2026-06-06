@@ -39,7 +39,9 @@ export function generateSubstitutionSuggestions(
   });
 }
 
-export function collectMissingIngredients(plan: KitchenPlan) {
+export function collectMissingIngredients(
+  plan: Pick<KitchenPlan, "breakfast" | "lunch" | "dinner">,
+) {
   return uniqueStrings([
     ...plan.breakfast.missingIngredients,
     ...plan.lunch.missingIngredients,

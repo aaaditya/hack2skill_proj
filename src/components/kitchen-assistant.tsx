@@ -13,9 +13,11 @@ import {
 import {
   Apple,
   ChefHat,
+  CheckCircle2,
   Clock3,
   DollarSign,
   Leaf,
+  ListChecks,
   Loader2,
   Moon,
   Sparkles,
@@ -41,6 +43,7 @@ import {
 } from "@/lib/kitchen/schemas";
 import type {
   BudgetAnalysis,
+  CookingTodoItem,
   KitchenFormValues,
   KitchenPlan,
   MealRecommendation,
@@ -315,6 +318,8 @@ export function KitchenAssistant() {
                   />
                 </div>
 
+                <TodoListCard items={plan.cookingTodoList} />
+
                 <div className="grid gap-6 xl:grid-cols-3">
                   <MealCard meal={plan.breakfast} />
                   <MealCard meal={plan.lunch} />
@@ -325,7 +330,7 @@ export function KitchenAssistant() {
                   <BudgetCard analysis={plan.budgetAnalysis} />
                   <WasteCard score={plan.wasteReductionScore} />
                   <ListCard
-                    title="Smart grocery list"
+                    title="Grocery List"
                     description="Only buy what the meal plan cannot cover from your pantry."
                     items={plan.groceryList}
                     icon={<Utensils className="h-5 w-5 text-primary" />}
@@ -389,7 +394,7 @@ const MealCard = memo(function MealCard({
     <Card className="flex h-full flex-col">
       <CardHeader>
         <div className="flex items-center justify-between gap-3">
-          <Badge variant="secondary">{meal.mealType}</Badge>
+          <Badge variant="secondary">{meal.mealType} Plan</Badge>
           <span className="flex items-center gap-1 text-sm text-muted-foreground">
             <Clock3 className="h-4 w-4" />
             {meal.cookingTime}
@@ -468,7 +473,7 @@ const BudgetCard = memo(function BudgetCard({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-primary" />
-          Budget feasibility
+          Budget Feasibility Analysis
         </CardTitle>
         <CardDescription>
           Estimated spend compared with your daily budget.
@@ -486,6 +491,58 @@ const BudgetCard = memo(function BudgetCard({
         <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">
           {analysis.notes}
         </p>
+      </CardContent>
+    </Card>
+  );
+});
+
+const TodoListCard = memo(function TodoListCard({
+  items,
+}: {
+  items: CookingTodoItem[];
+}) {
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardHeader>
+        <Badge className="w-fit" variant="success">
+          Required daily timeline
+        </Badge>
+        <CardTitle className="flex items-center gap-2 text-2xl">
+          <ListChecks className="h-6 w-6 text-primary" />
+          Today&apos;s Cooking To-Do List
+        </CardTitle>
+        <CardDescription>
+          A dedicated, structured checklist generated from your meals, cooking
+          time, missing ingredients, grocery requirements, and daily plan.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ol
+          aria-label="Today's cooking to-do timeline"
+          className="grid gap-3 md:grid-cols-2"
+        >
+          {items.map((item) => (
+            <li
+              className="flex gap-4 rounded-2xl border border-border bg-background/70 p-4"
+              key={`${item.time}-${item.task}`}
+            >
+              <div className="flex flex-col items-center">
+                <CheckCircle2
+                  aria-hidden="true"
+                  className="h-5 w-5 text-primary"
+                />
+                <span className="mt-2 h-full w-px bg-border" />
+              </div>
+              <div className="min-w-0 space-y-1">
+                <time className="text-sm font-bold text-primary">
+                  {item.time}
+                </time>
+                <p className="font-semibold">{item.task}</p>
+                <Badge variant="secondary">{item.category}</Badge>
+              </div>
+            </li>
+          ))}
+        </ol>
       </CardContent>
     </Card>
   );
@@ -576,7 +633,7 @@ const SubstitutionCard = memo(function SubstitutionCard({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ingredient substitutions</CardTitle>
+        <CardTitle>Ingredient Substitutions</CardTitle>
         <CardDescription>
           Practical swaps for missing, expensive, or diet-conflicting items.
         </CardDescription>

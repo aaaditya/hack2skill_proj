@@ -10,6 +10,7 @@ import {
   type KitchenPlan,
   kitchenPlanSchema,
 } from "@/lib/kitchen/schemas";
+import { generateCookingTodoList } from "@/lib/kitchen/todo";
 
 export function parseKitchenPlanResponse(
   rawText: string,
@@ -38,12 +39,11 @@ export function enforceProblemAlignment(
     values.budget,
     plan.budgetAnalysis.estimatedCost,
   );
-
-  return {
+  const planWithoutTodo = {
     ...plan,
-    breakfast: { ...plan.breakfast, mealType: "Breakfast" },
-    lunch: { ...plan.lunch, mealType: "Lunch" },
-    dinner: { ...plan.dinner, mealType: "Dinner" },
+    breakfast: { ...plan.breakfast, mealType: "Breakfast" as const },
+    lunch: { ...plan.lunch, mealType: "Lunch" as const },
+    dinner: { ...plan.dinner, mealType: "Dinner" as const },
     groceryList: plan.groceryList.length ? plan.groceryList : missingIngredients,
     substitutions,
     budgetAnalysis: {
@@ -57,6 +57,13 @@ export function enforceProblemAlignment(
       ...plan.wasteReductionScore,
       score: Math.min(Math.max(plan.wasteReductionScore.score, 0), 100),
     },
+  };
+
+  return {
+    ...planWithoutTodo,
+    cookingTodoList: plan.cookingTodoList.length
+      ? plan.cookingTodoList
+      : generateCookingTodoList(planWithoutTodo, values),
   };
 }
 
