@@ -1,5 +1,7 @@
 # AI Kitchen Assistant
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/aaaditya/hack2skill_proj&env=GEMINI_API_KEY&envDescription=Your%20Gemini%20API%20key%20from%20Google%20AI%20Studio&envLink=https://aistudio.google.com/app/apikey&project-name=ai-kitchen-assistant&repository-name=ai-kitchen-assistant)
+
 A production-ready AI micro-app built with Next.js 15, TypeScript, Tailwind CSS,
 and shadcn/ui-style primitives. It generates a personal cooking plan and a
 dedicated daily cooking to-do list from a user's budget, ingredients, skill
@@ -150,11 +152,33 @@ npm run start
 
 ## Deployment Instructions
 
-The app is deployable on Vercel. Configure `GEMINI_API_KEY` or
-`GOOGLE_API_KEY` in the project environment variables before deployment.
+### Vercel (recommended)
+
+**One-click deploy:**
+
+Click the **Deploy with Vercel** button at the top of this README.
+
+Vercel will prompt you to enter `GEMINI_API_KEY` before deploying. Paste your
+key from [Google AI Studio](https://aistudio.google.com/app/apikey) and click
+**Deploy**. No other configuration is needed.
+
+**Manual deploy:**
+
+1. Push this repository to GitHub (already done).
+2. Go to [vercel.com/new](https://vercel.com/new) and import the repo.
+3. Under **Environment Variables**, add:
+   - Name: `GEMINI_API_KEY`
+   - Value: your key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+4. Click **Deploy**.
+
+The `vercel.json` in this repo configures:
+- Build command: `npm run build`
+- Install command: `npm install`
+- Framework: Next.js
+- API function max duration: 60 seconds (allows time for Gemini to respond)
 
 No local database, local files, hardcoded ports, or machine-specific paths are
-required.
+required. The app works on any reviewer machine with a valid API key.
 
 ## How This Solution Meets The Evaluation Criteria
 

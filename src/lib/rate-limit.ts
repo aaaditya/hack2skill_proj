@@ -1,3 +1,10 @@
+// In-memory rate limiter.
+//
+// On Vercel (serverless), each function instance has its own memory, so this
+// limits requests per-instance rather than globally. That is intentional and
+// sufficient for a hackathon demo. For production multi-instance deployments
+// replace the Map with a shared store such as Upstash Redis.
+
 type RateLimitState = {
   count: number;
   resetAt: number;
@@ -36,8 +43,8 @@ export function checkRateLimit(
 
 export function getClientIp(headers: Headers) {
   return (
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    headers.get("x-real-ip") ||
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headers.get("x-real-ip") ??
     "anonymous"
   );
 }
