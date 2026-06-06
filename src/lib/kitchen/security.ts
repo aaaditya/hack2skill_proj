@@ -28,8 +28,8 @@ export function createDelimitedUserContext(
 }
 
 export function publicErrorMessage(error: unknown) {
-  if (error instanceof Error && error.message) {
-    return error.message;
+  if (error instanceof Error && error.name === "AbortError") {
+    return "The request timed out. Please try again.";
   }
 
   return "Unable to generate your kitchen plan. Please try again.";

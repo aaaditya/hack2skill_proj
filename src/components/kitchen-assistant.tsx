@@ -506,7 +506,14 @@ const WasteCard = memo(function WasteCard({
         <CardDescription>{score.label}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="h-3 overflow-hidden rounded-full bg-muted">
+        <div
+          aria-label="Waste reduction score"
+          aria-valuemax={100}
+          aria-valuemin={0}
+          aria-valuenow={score.score}
+          className="h-3 overflow-hidden rounded-full bg-muted"
+          role="progressbar"
+        >
           <div
             className="h-full rounded-full bg-primary transition-all"
             style={{ width: `${Math.min(Math.max(score.score, 0), 100)}%` }}
