@@ -1,6 +1,15 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  ReactNode,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Apple,
   ChefHat,
@@ -24,7 +33,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form-controls";
-import type { BudgetAnalysis, KitchenFormValues, KitchenPlan, MealRecommendation } from "@/lib/types";
+import { generateKitchenPlan } from "@/features/kitchen-assistant/api";
+import {
+  dietaryPreferences,
+  kitchenFormSchema,
+  skillLevels,
+} from "@/lib/kitchen/schemas";
+import type {
+  BudgetAnalysis,
+  KitchenFormValues,
+  KitchenPlan,
+  MealRecommendation,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const defaultValues: KitchenFormValues = {
@@ -36,24 +56,14 @@ const defaultValues: KitchenFormValues = {
   healthGoal: "Build lean muscle while keeping meals balanced",
 };
 
-const skillLevels = ["Beginner", "Intermediate", "Advanced"];
-const dietaryPreferences = [
-  "No preference",
-  "Vegetarian",
-  "Vegan",
-  "High protein",
-  "Low carb",
-  "Gluten free",
-  "Dairy free",
-  "Mediterranean",
-];
-
 export function KitchenAssistant() {
   const [values, setValues] = useState<KitchenFormValues>(defaultValues);
   const [plan, setPlan] = useState<KitchenPlan | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("kitchen-theme");
@@ -65,6 +75,18 @@ export function KitchenAssistant() {
     document.documentElement.classList.toggle("dark", darkMode);
     window.localStorage.setItem("kitchen-theme", darkMode ? "dark" : "light");
   }, [darkMode]);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus();
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (plan) {
+      resultsRef.current?.focus();
+    }
+  }, [plan]);
 
   const missingCount = useMemo(() => {
     if (!plan) {
@@ -84,21 +106,9 @@ export function KitchenAssistant() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/kitchen-plan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? "Unable to generate your plan.");
-      }
-
-      setPlan(data.plan);
+      const parsedValues = kitchenFormSchema.parse(values);
+      const kitchenPlan = await generateKitchenPlan(parsedValues);
+      setPlan(kitchenPlan);
     } catch (caughtError) {
       setError(
         caughtError instanceof Error
@@ -110,9 +120,9 @@ export function KitchenAssistant() {
     }
   }
 
-  function updateValue(field: keyof KitchenFormValues, value: string) {
+  const updateValue = useCallback((field: keyof KitchenFormValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
-  }
+  }, []);
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
@@ -160,7 +170,12 @@ export function KitchenAssistant() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="space-y-5" onSubmit={handleSubmit}>
+              <form
+                aria-busy={loading}
+                aria-describedby={error ? "form-error" : undefined}
+                className="space-y-5"
+                onSubmit={handleSubmit}
+              >
                 <Field label="Daily budget" htmlFor="budget">
                   <Input
                     id="budget"
@@ -238,7 +253,14 @@ export function KitchenAssistant() {
                 </Field>
 
                 {error ? (
-                  <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200">
+                  <div
+                    aria-live="assertive"
+                    className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-200"
+                    id="form-error"
+                    ref={errorRef}
+                    role="alert"
+                    tabIndex={-1}
+                  >
                     {error}
                   </div>
                 ) : null}
@@ -260,7 +282,15 @@ export function KitchenAssistant() {
             </CardContent>
           </Card>
 
-          <section className="space-y-6">
+          <section
+            aria-labelledby="results-heading"
+            className="space-y-6 outline-none"
+            ref={resultsRef}
+            tabIndex={-1}
+          >
+            <h2 className="sr-only" id="results-heading">
+              Generated kitchen plan results
+            </h2>
             {loading ? <LoadingState /> : null}
 
             {!loading && !plan ? <EmptyState /> : null}
@@ -316,7 +346,7 @@ function Field({
   htmlFor,
   label,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   htmlFor: string;
   label: string;
 }) {
@@ -328,12 +358,12 @@ function Field({
   );
 }
 
-function MetricCard({
+const MetricCard = memo(function MetricCard({
   icon,
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
@@ -348,9 +378,13 @@ function MetricCard({
       </CardContent>
     </Card>
   );
-}
+});
 
-function MealCard({ meal }: { meal: MealRecommendation }) {
+const MealCard = memo(function MealCard({
+  meal,
+}: {
+  meal: MealRecommendation;
+}) {
   return (
     <Card className="flex h-full flex-col">
       <CardHeader>
@@ -386,9 +420,9 @@ function MealCard({ meal }: { meal: MealRecommendation }) {
       </CardContent>
     </Card>
   );
-}
+});
 
-function PillGroup({
+const PillGroup = memo(function PillGroup({
   emptyLabel,
   items,
   title,
@@ -415,9 +449,13 @@ function PillGroup({
       </div>
     </div>
   );
-}
+});
 
-function BudgetCard({ analysis }: { analysis: BudgetAnalysis }) {
+const BudgetCard = memo(function BudgetCard({
+  analysis,
+}: {
+  analysis: BudgetAnalysis;
+}) {
   const variant =
     analysis.budgetStatus === "Over Budget"
       ? "destructive"
@@ -451,9 +489,9 @@ function BudgetCard({ analysis }: { analysis: BudgetAnalysis }) {
       </CardContent>
     </Card>
   );
-}
+});
 
-function WasteCard({
+const WasteCard = memo(function WasteCard({
   score,
 }: {
   score: KitchenPlan["wasteReductionScore"];
@@ -485,16 +523,16 @@ function WasteCard({
       </CardContent>
     </Card>
   );
-}
+});
 
-function ListCard({
+const ListCard = memo(function ListCard({
   description,
   icon,
   items,
   title,
 }: {
   description: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   items: string[];
   title: string;
 }) {
@@ -521,9 +559,9 @@ function ListCard({
       </CardContent>
     </Card>
   );
-}
+});
 
-function SubstitutionCard({
+const SubstitutionCard = memo(function SubstitutionCard({
   substitutions,
 }: {
   substitutions: KitchenPlan["substitutions"];
@@ -555,14 +593,14 @@ function SubstitutionCard({
       </CardContent>
     </Card>
   );
-}
+});
 
-function InfoBlock({
+const InfoBlock = memo(function InfoBlock({
   label,
   value,
 }: {
   label: string;
-  value: React.ReactNode;
+  value: ReactNode;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-background/50 p-4">
@@ -572,7 +610,7 @@ function InfoBlock({
       <div className="mt-2 text-lg font-bold">{value}</div>
     </div>
   );
-}
+});
 
 function LoadingState() {
   return (
